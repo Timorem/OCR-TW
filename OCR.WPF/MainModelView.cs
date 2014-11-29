@@ -16,30 +16,31 @@ namespace OCR.WPF
             
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public BitmapSource Original { get; set; }
 
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        public Projection VerticalProjection
         {
-            PropertyChangedEventHandler handler = PropertyChanged;
-            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+            get;
+            private set;
         }
 
-        public BitmapSource Original
+        public Projection HorizontalProjection
         {
-            get { return m_original; }
-            set { m_original = value;
-                Image = value;
-            }
+            get;
+            private set;
         }
 
-        public BitmapSource Image
+        public CharacterIsolation CharacterIsolation
         {
-            get { return m_image; }
-            set { m_image = value;
-                OnPropertyChanged();
-            }
+            get;
+            private set;
         }
+        public EdgeDetector EdgeDetector
+        {
+            get;
+            private set;
+        }
+
 
         public void OpenPicture(string file)
         {
@@ -50,6 +51,15 @@ namespace OCR.WPF
             }
 
             Original = new BitmapImage(new Uri(file));
+
+            VerticalProjection = new Projection(Original) {Type = ProjectionType.Vertical};
+            VerticalProjection.Compute();
+
+            HorizontalProjection = new Projection(Original) {Type = ProjectionType.Horizontal};
+            HorizontalProjection.Compute();
+
+            CharacterIsolation = new CharacterIsolation(Original);
+            EdgeDetector = new EdgeDetector(Original);
         }
 
 
@@ -73,10 +83,8 @@ namespace OCR.WPF
             if (!CanApplyEdgeDetection(parameter))
                 return;
 
-            var alg = new EdgeDetector(Original);
-            alg.GradientLimit = 20d;
-            alg.Compute();
-            Image = alg.Output;
+            EdgeDetector.GradientLimit = 20d;
+            EdgeDetector.Compute();
             
         }
 
@@ -86,7 +94,6 @@ namespace OCR.WPF
         #region ApplyCharacterIsolationCommand
 
         private DelegateCommand m_applyCharacterIsolationCommand;
-        private BitmapSource m_original;
 
         public DelegateCommand ApplyCharacterIsolationCommand
         {
@@ -103,12 +110,18 @@ namespace OCR.WPF
             if (!CanApplyCharacterIsolation(parameter))
                 return;
 
-            var alg = new CharacterIsolation(Original);
-            alg.EdgeDetector.GradientLimit = 20;
-            alg.Compute();
-            Image = alg.Output;
+            CharacterIsolation.EdgeDetector.GradientLimit = 20;
+            CharacterIsolation.Compute();
         }
 
         #endregion
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

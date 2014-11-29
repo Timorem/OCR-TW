@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -51,6 +52,12 @@ namespace OCR.WPF
             }
 
             ModelView.OpenPicture(files.Single());
+        }
+
+        private void RangeBase_OnValueChanged(object sender, DragCompletedEventArgs dragCompletedEventArgs)
+        {
+            if (ModelView != null && ModelView.ApplyCharacterIsolationCommand != null)
+                ModelView.ApplyCharacterIsolationCommand.Execute(null);
         }
     }
 }

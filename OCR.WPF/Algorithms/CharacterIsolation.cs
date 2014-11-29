@@ -14,9 +14,10 @@ namespace OCR.WPF.Algorithms
         {
             EdgeDetector = new EdgeDetector(Source);
             EdgeDetector.GradientLimit = 20d;
-            SpaceRatioThreshold = 0.15d;
-            WordPixelSpacesRatio = 0.01d;
-            Characters = new ObservableCollection<Rect>();
+            SpaceRatioThreshold = 0.08d;
+            WordPixelSpacesRatio = 0.005d;
+            Characters = new ObservableCollection<Int32Rect>();
+            Words = new ObservableCollection<Int32Rect>();
         }
 
         public EdgeDetector EdgeDetector
@@ -25,7 +26,12 @@ namespace OCR.WPF.Algorithms
             set;
         }
 
-        public ObservableCollection<Rect> Characters
+        public ObservableCollection<Int32Rect> Characters
+        {
+            get;
+            set;
+        }
+        public ObservableCollection<Int32Rect> Words
         {
             get;
             set;
@@ -51,6 +57,8 @@ namespace OCR.WPF.Algorithms
 
         protected override unsafe void OnCompute()
         {
+            Words.Clear();
+
             Output.WritePixels(new Int32Rect(0, 0, Source.PixelWidth, Source.PixelHeight), m_readBuffer, m_stride, 0);
             // isolate lines
             var currentLine = new Int32Rect();
@@ -93,7 +101,6 @@ namespace OCR.WPF.Algorithms
                 int spaces = 0;
                 bool inWord = false;
                 var currentWord = new Int32Rect();
-                var words = new List<Int32Rect>();
                 for (int x = line.X; x < right; x++)
                 {
                     int sum = 0;
@@ -118,15 +125,15 @@ namespace OCR.WPF.Algorithms
                         inWord = true;
                         currentWord = new Int32Rect(x, line.Y, 0, line.Height);
                     }
-                    else
+                    else if (inWord)
                     {
                         bool newWord = (double)spaces/line.Width > WordPixelSpacesRatio;
                         if (newWord)
                         {
                             inWord = false;
                             currentWord.Width = x - spaces - currentWord.X;
-                            words.Add(currentWord);
-                            Output.DrawRectangle(currentWord.X, currentWord.Y, currentWord.X + currentWord.Width, currentWord.Y + currentWord.Height, Colors.Blue);
+                            Words.Add(currentWord);
+                            Output.DrawRectangle((int) currentWord.X, (int) currentWord.Y, (int) (currentWord.X + currentWord.Width), (int) (currentWord.Y + currentWord.Height), Colors.Blue);
                         }
                     }
                 }

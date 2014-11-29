@@ -14,9 +14,9 @@ namespace OCR.WPF.Algorithms
     {
         protected byte[] m_readBuffer;
         protected byte[] m_writeBuffer;
-        private int m_pixelSize;
+        protected int m_pixelSize;
         protected int m_stride;
-        private bool m_initialized;
+        protected bool m_initialized;
         private BitmapSource m_input;
 
         public AlgorithmBase(BitmapSource image)
