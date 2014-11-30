@@ -51,7 +51,18 @@
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
-                                <Slider DockPanel.Dock="Right" Minimum="0.0005" Maximum="0.01" Value="{Binding CharacterIsolation.WordPixelSpacesRatio}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                                <Slider DockPanel.Dock="Right" Minimum="0.00005" Maximum="0.01" Value="{Binding CharacterIsolation.WordPixelSpacesRatio}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                            </DockPanel>
+                            <DockPanel>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource MultiplyConverter}" StringFormat="{}Pixels between characters : {0:n}px">
+                                            <Binding Path="CharacterIsolation.CharactersPixelSpacesRatio"/>
+                                            <Binding Path="Original.PixelWidth"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <Slider DockPanel.Dock="Right" Minimum="0.0005" Maximum="0.01" Value="{Binding CharacterIsolation.CharactersPixelSpacesRatio}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
                             <Button Margin="3" Content="Compute" Command="{Binding ApplyCharacterIsolationCommand}" />
                         </StackPanel>
@@ -64,7 +75,7 @@
                                         <Image.Source>
                                             <CroppedBitmap
                                                 Source="{Binding Data.Original, Source={StaticResource Proxy}}"
-                                                SourceRect="{Binding}" />
+                                                SourceRect="{Binding Region}" />
                                         </Image.Source>
                                     </Image>
                                 </DataTemplate>

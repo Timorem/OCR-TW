@@ -9,6 +9,8 @@ namespace OCR.WPF.Algorithms
     {
         private double m_gradientCoefficient;
 
+
+
         public EdgeDetector(BitmapSource image)
             : base(image)
         {
@@ -44,29 +46,27 @@ namespace OCR.WPF.Algorithms
         protected override void OnCompute()
         {
             Gradients = new double[Source.PixelWidth,Source.PixelHeight];
+            var derivativeX = new double[Source.PixelWidth,Source.PixelHeight];
+            var derivativeY = new double[Source.PixelWidth,Source.PixelHeight];
+            var nonMaxGradient = new double[Source.PixelWidth,Source.PixelHeight];
             Edges = new bool[Source.PixelWidth,Source.PixelHeight];
-            double max = 0d;
-            for (int y = 0; y < Source.PixelHeight - 2; y++)
+
+            for (int y = 2; y < Source.PixelHeight - 2; y++)
             {
-                for (int x = 0; x < Source.PixelWidth - 2; x++)
+                for (int x = 2; x < Source.PixelWidth - 2; x++)
                 {
                     var pixelXY = GetPixel(x, y);
                     var pixelXXY = GetPixel(x + 1, y);
                     var pixelXYY = GetPixel(x, y + 1);
 
-                    double dX = (pixelXXY.R + pixelXXY.G + pixelXXY.B) - (pixelXY.R + pixelXY.G + pixelXY.B);
-                    double dY = (pixelXYY.R + pixelXYY.G + pixelXYY.B) - (pixelXY.R + pixelXY.G + pixelXY.B);
-                    double gradient = Math.Sqrt(dX*dX + dY*dY);
-                    Gradients[x,y] = gradient;
-
-                    if (gradient >= max)
-                        max = gradient;
+                    derivativeX[x,y] = (pixelXXY.R + pixelXXY.G + pixelXXY.B) - (pixelXY.R + pixelXY.G + pixelXY.B);
+                    derivativeY[x,y] = (pixelXYY.R + pixelXYY.G + pixelXYY.B) - (pixelXY.R + pixelXY.G + pixelXY.B);
                 }
             }
 
-            for (int y = 0; y < Source.PixelHeight - 1; y++)
+            for (int y = 2; y < Source.PixelHeight - 2; y++)
             {
-                for (int x = 0; x < Source.PixelWidth - 1; x++)
+                for (int x = 2; x < Source.PixelWidth - 2; x++)
                 {
                     if (Gradients[x, y] >= GradientLimit)
                     {

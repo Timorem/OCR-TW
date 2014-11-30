@@ -65,6 +65,7 @@
     </ApplicationDefinition>
     <Compile Include="Algorithms\CharacterIsolation.cs" />
     <Compile Include="Algorithms\Projection.cs" />
+    <Compile Include="Algorithms\Word.cs" />
     <Compile Include="UI\ApplicationInfo.cs" />
     <Compile Include="UI\BindingProxy.cs" />
     <Compile Include="UI\Converters\MultiplyConverter.cs" />
