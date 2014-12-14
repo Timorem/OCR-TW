@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using OCR.WPF.Imaging;
 using OCR.WPF.UI;
 
 namespace OCR.WPF
@@ -20,7 +23,7 @@ namespace OCR.WPF
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public MainWindow()
         {
@@ -59,5 +62,51 @@ namespace OCR.WPF
             if (ModelView != null && ModelView.ApplyCharacterIsolationCommand != null)
                 ModelView.ApplyCharacterIsolationCommand.Execute(null);
         }
+        private void GradientRangeBase_OnValueChanged(object sender, DragCompletedEventArgs dragCompletedEventArgs)
+        {
+            if (ModelView != null && ModelView.ApplyEdgeDetectionCommand != null)
+                ModelView.ApplyEdgeDetectionCommand.Execute(null);
+        }
+
+        private void ToggleButton_OnChecked(object sender, RoutedEventArgs e)
+        {
+            if (ModelView != null && ModelView.ApplyCharacterIsolationCommand != null)
+                ModelView.ApplyCharacterIsolationCommand.Execute(null);
+        }
+
+        public double CurrentBrightness
+        {
+            get;
+            set;
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            try
+            {
+
+            if (ModelView.CharacterIsolation != null && ModelView.CharacterIsolation.Output != null)
+            {
+                var pos = e.GetPosition(IsolationOutput);
+                var brightness = ModelView.CharacterIsolation.GetPixel((int) pos.X, (int) pos.Y).GetBrightness();
+
+                CurrentBrightness = brightness;
+            }
+            }
+            catch (Exception)
+            {
+                
+            }
+            base.OnMouseMove(e);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+
     }
 }

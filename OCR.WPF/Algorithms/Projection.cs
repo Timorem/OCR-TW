@@ -1,5 +1,6 @@
 ﻿using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using OCR.WPF.Imaging;
 
 namespace OCR.WPF.Algorithms
 {
@@ -69,7 +70,7 @@ namespace OCR.WPF.Algorithms
                         for (int y = 0; y < Source.PixelHeight; y++)
                         {
                             var pixel = GetPixel(x, y);
-                            sum += (pixel.R + pixel.G + pixel.A)/(3*255d);
+                            sum += pixel.GetBrightness();
                         }
                         var value = sum/Source.PixelHeight;
                         ProjectionOutput[x] = (byte)(255*value);

@@ -73,7 +73,7 @@ namespace OCR.WPF.Algorithms
 
         protected abstract void OnCompute();
 
-        protected Color GetPixel(int x, int y)
+        public Color GetPixel(int x, int y)
         {
             var i = y*m_stride + (x*m_pixelSize);
             return Color.FromArgb(m_readBuffer[i+3], m_readBuffer[i+2], m_readBuffer[i+1], m_readBuffer[i]);

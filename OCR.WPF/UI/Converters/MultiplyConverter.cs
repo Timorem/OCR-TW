@@ -14,7 +14,7 @@ namespace OCR.WPF.UI.Converters
                 return DependencyProperty.UnsetValue;
 
 
-            var x = (double)values[0];
+            var x = (int)values[0];
             var y = (int)values[1];
 
             return x*y;

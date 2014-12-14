@@ -3,19 +3,20 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using OCR.WPF.Imaging;
 
 namespace OCR.WPF.Algorithms
 {
     public class CharacterIsolation : AlgorithmBase
     {
-        public CharacterIsolation(BitmapSource image)
+        public CharacterIsolation(BitmapSource image, EdgeDetector edgeDetector)
             : base(image)
         {
-            EdgeDetector = new EdgeDetector(Source);
-            EdgeDetector.GradientLimit = 20d;
-            SpaceRatioThreshold = 0.08d;
-            WordPixelSpacesRatio = 0.002d;
-            CharactersPixelSpacesRatio = 0.0001d;
+            EdgeDetector = edgeDetector;
+            LinesBlankThreshold = 0.001d;
+            CharactersBlankThreshold = 0.08d;
+            WordPixelSpaces = 5;
+            CharactersPixelSpaces = 1;
             Characters = new ObservableCollection<Int32Rect>();
             Words = new ObservableCollection<Word>();
             Lines = new ObservableCollection<Int32Rect>();
@@ -45,18 +46,42 @@ namespace OCR.WPF.Algorithms
             set;
         }
 
-        public double WordPixelSpacesRatio
+        public int WordPixelSpaces
         {
             get;
             set;
         }
-        public double CharactersPixelSpacesRatio
+        public int CharactersPixelSpaces
         {
             get;
             set;
         }
 
-        public double SpaceRatioThreshold
+        public double LinesBlankThreshold
+        {
+            get;
+            set;
+        }
+
+        public double CharactersBlankThreshold
+        {
+            get;
+            set;
+        }
+
+        public bool ShowLines
+        {
+            get;
+            set;
+        }
+
+        public bool ShowWords
+        {
+            get;
+            set;
+        }
+
+        public bool ShowCharacters
         {
             get;
             set;
@@ -76,31 +101,34 @@ namespace OCR.WPF.Algorithms
             var imageRect = new Int32Rect(0, 0, Source.PixelWidth, Source.PixelHeight);
             Output.WritePixels(imageRect, m_readBuffer, m_stride, 0);
             // isolate lines
-            foreach (Int32Rect line in Isolate(imageRect, 0, WordPixelSpacesRatio, true, Colors.Red))
-            {
-                Lines.Add(line);
+            foreach (Int32Rect line in Isolate(imageRect, LinesBlankThreshold, WordPixelSpaces, true, ShowLines ? (Color?)Colors.Red : null))
+            {                    
+                if (line.Height > 0 && line.Width > 0)
+                    Lines.Add(line);
             }
 
             // isolate words
             foreach (Int32Rect line in Lines)
             {
-                foreach (Int32Rect region in Isolate(line, SpaceRatioThreshold, WordPixelSpacesRatio, false, null))
+                foreach (Int32Rect region in Isolate(line, CharactersBlankThreshold, WordPixelSpaces, false, ShowWords ? (Color?)Colors.Blue : null))
                 {
-                    Words.Add(new Word(region));
+                    if (region.Height > 0 && region.Width > 0)
+                        Words.Add(new Word(region));
                 }
             }
 
             // isolate characters
             foreach (Word word in Words)
             {
-                foreach (Int32Rect region in Isolate(word.Region, SpaceRatioThreshold, CharactersPixelSpacesRatio, false, Colors.Green))
+                foreach (Int32Rect region in Isolate(word.Region, CharactersBlankThreshold, CharactersPixelSpaces, false, ShowCharacters ? (Color?)Colors.Green : null, true))
                 {
-                    word.Characters.Add(region);
+                    if (region.Height > 0 && region.Width > 0)
+                        word.Characters.Add(region);
                 }
             }
-        }
+        }       
 
-        private IEnumerable<Int32Rect> Isolate(Int32Rect zone, double spacesRatio, double blanksBetweenRegionsRatio, bool horizontal, Color? drawColor)
+        private IEnumerable<Int32Rect> Isolate(Int32Rect zone, double spacesRatio, int blanksBetweenRegionsRatio, bool horizontal, Color? drawColor, bool drawBlanks = false)
         {
             int right = zone.X + zone.Width;
             int bot = zone.Y + zone.Height;
@@ -110,19 +138,22 @@ namespace OCR.WPF.Algorithms
             int x = horizontal ? zone.Y : zone.X;
             for (; x < (horizontal ? bot : right); x++)
             {
-                int sum = 0;
+                double sum = 0;
                 int y = horizontal ? zone.X : zone.Y;
                 for (; y < (horizontal ? right : bot); y++)
                 {
-                    if (horizontal ? EdgeDetector.Edges[y, x] : EdgeDetector.Edges[x, y])
-                        sum++;
+                    sum += horizontal ? GetPixel(y, x).GetBrightness() : GetPixel(x, y).GetBrightness();
                 }
 
-                double ratio = (double) sum/(horizontal ? zone.Width : zone.Height);
+                double ratio = 1-(double) sum/(horizontal ? zone.Width : zone.Height);
                 bool blank = ratio <= spacesRatio;
 
                 if (blank)
+                {
+                    if (!horizontal && drawBlanks)
+                        Output.DrawLine(x, zone.Y, x, bot, Colors.HotPink);
                     spaces++;
+                }
 
                 if (!blank && !inRegion)
                 {
@@ -130,9 +161,9 @@ namespace OCR.WPF.Algorithms
                     inRegion = true;
                     currentRegion = horizontal ? new Int32Rect(zone.X, x, zone.Width, 0) : new Int32Rect(x, zone.Y, 0, zone.Height);
                 }
-                else if (inRegion)
+                else if (inRegion && (blank || x == (horizontal ? bot : right) -1 ))
                 {
-                    bool newRegion = (double) spaces/(horizontal ? zone.Height : zone.Width) >= blanksBetweenRegionsRatio;
+                    bool newRegion = spaces >= blanksBetweenRegionsRatio;
                     if (newRegion)
                     {
                         inRegion = false;
@@ -148,6 +179,8 @@ namespace OCR.WPF.Algorithms
                     }
                 }
             }
+            if (inRegion)
+                yield return currentRegion;
         }
     }
 }

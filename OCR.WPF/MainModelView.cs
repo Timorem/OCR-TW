@@ -41,7 +41,6 @@ namespace OCR.WPF
             private set;
         }
 
-
         public void OpenPicture(string file)
         {
             if (!File.Exists(file))
@@ -58,8 +57,9 @@ namespace OCR.WPF
             HorizontalProjection = new Projection(Original) {Type = ProjectionType.Horizontal};
             HorizontalProjection.Compute();
 
-            CharacterIsolation = new CharacterIsolation(Original);
             EdgeDetector = new EdgeDetector(Original);
+            EdgeDetector.GradientLimit = 20;
+            CharacterIsolation = new CharacterIsolation(Original, EdgeDetector);
         }
 
 
@@ -83,7 +83,6 @@ namespace OCR.WPF
             if (!CanApplyEdgeDetection(parameter))
                 return;
 
-            EdgeDetector.GradientLimit = 20d;
             EdgeDetector.Compute();
             
         }
@@ -110,7 +109,6 @@ namespace OCR.WPF
             if (!CanApplyCharacterIsolation(parameter))
                 return;
 
-            CharacterIsolation.EdgeDetector.GradientLimit = 20;
             CharacterIsolation.Compute();
         }
 

@@ -39,31 +39,41 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="200"/>
                     </Grid.ColumnDefinitions>
-                    <Image Source="{Binding CharacterIsolation.Output}"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Image Source="{Binding CharacterIsolation.Output}" Name="IsolationOutput"/>
+                        <TextBlock Text="{Binding CurrentBrightness, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
+                        <Image Grid.Row="1" Grid.Column="0" Source="{Binding VerticalProjection.Output}"
+                           Width="{Binding ActualWidth, ElementName=IsolationOutput}" Stretch="Fill" />
+                        <Image Grid.Row="0" Grid.Column="1" Source="{Binding HorizontalProjection.Output}"
+                           Height="{Binding ActualHeight, ElementName=IsolationOutput}" Stretch="Fill" />
+                    </Grid>
                     <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Actions">
                         <StackPanel>
                             <DockPanel>
-                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250">
-                                    <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource MultiplyConverter}" StringFormat="{}Pixels between words : {0:n}px">
-                                            <Binding Path="CharacterIsolation.WordPixelSpacesRatio"/>
-                                            <Binding Path="Original.PixelWidth"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                                <Slider DockPanel.Dock="Right" Minimum="0.00005" Maximum="0.01" Value="{Binding CharacterIsolation.WordPixelSpacesRatio}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.WordPixelSpaces, StringFormat={}Spaces between words : {0:n}}"/>
+                                <Slider DockPanel.Dock="Right" Minimum="1" Maximum="20" Value="{Binding CharacterIsolation.WordPixelSpaces}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
                             <DockPanel>
-                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250">
-                                    <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource MultiplyConverter}" StringFormat="{}Pixels between characters : {0:n}px">
-                                            <Binding Path="CharacterIsolation.CharactersPixelSpacesRatio"/>
-                                            <Binding Path="Original.PixelWidth"/>
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                                <Slider DockPanel.Dock="Right" Minimum="0.0005" Maximum="0.01" Value="{Binding CharacterIsolation.CharactersPixelSpacesRatio}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.CharactersPixelSpaces, StringFormat={}Spaces between characters : {0:n}}"/>
+                                <Slider DockPanel.Dock="Right" Minimum="1" Maximum="20" Value="{Binding CharacterIsolation.CharactersPixelSpaces}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
+                            <DockPanel>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.CharactersBlankThreshold, StringFormat={}Characters blank threshold : {0:0.0000}%}"/>
+                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.CharactersBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                            </DockPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowLines}" Margin="3" Content="Show Lines" Checked="ToggleButton_OnChecked"/>
+                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowCharacters}" Margin="3" Content="Show Characters" Checked="ToggleButton_OnChecked"/>
+                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowWords}" Margin="3" Content="Show Words" Checked="ToggleButton_OnChecked"/>
+                            </StackPanel>
                             <Button Margin="3" Content="Compute" Command="{Binding ApplyCharacterIsolationCommand}" />
                         </StackPanel>
                     </GroupBox>
@@ -89,7 +99,13 @@
                 <StackPanel>
                     <Image Source="{Binding EdgeDetector.Output}" />
                     <GroupBox Header="Actions">
-                        <Button Margin="3" Content="Compute" Command="{Binding ApplyEdgeDetectionCommand}" />
+                        <StackPanel>
+                            <DockPanel>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding EdgeDetector.GradientLimit}"/>
+                                <Slider DockPanel.Dock="Right" Minimum="0" Maximum="255" Value="{Binding EdgeDetector.GradientLimit}" Thumb.DragCompleted="GradientRangeBase_OnValueChanged"/>
+                            </DockPanel>
+                            <Button Margin="3" Content="Compute" Command="{Binding ApplyEdgeDetectionCommand}" />
+                        </StackPanel>
                     </GroupBox>
                 </StackPanel>
             </TabItem>
