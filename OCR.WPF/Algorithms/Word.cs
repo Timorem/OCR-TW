@@ -7,13 +7,20 @@ namespace OCR.WPF.Algorithms
 {
     public class Word : INotifyPropertyChanged
     {
-        public Word(Int32Rect region)
+        public Word(Int32Rect region, int lineIndex)
         {
+            LineIndex = lineIndex;
             Region = region;
             Characters = new ObservableCollection<Int32Rect>();
         }
 
         public Int32Rect Region
+        {
+            get;
+            set;
+        }
+
+        public int LineIndex
         {
             get;
             set;

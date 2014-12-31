@@ -74,7 +74,13 @@ namespace OCR.WPF
                 ModelView.ApplyCharacterIsolationCommand.Execute(null);
         }
 
-        public double CurrentBrightness
+        public string DebugInformation
+        {
+            get;
+            set;
+        }
+
+        public CroppedBitmap CurrentZone
         {
             get;
             set;
@@ -84,20 +90,48 @@ namespace OCR.WPF
         {
             try
             {
+                if (ModelView.CharacterIsolation != null && ModelView.CharacterIsolation.Output != null)
+                {
+                    Point pos = e.GetPosition(IsolationOutput);
+                    var bmpImage = (WriteableBitmap) IsolationOutput.Source;
+                    var pixelX = (int) (pos.X*bmpImage.PixelWidth/IsolationOutput.ActualWidth);
+                    var pixelY = (int) (pos.Y*bmpImage.PixelHeight/IsolationOutput.ActualHeight);
 
-            if (ModelView.CharacterIsolation != null && ModelView.CharacterIsolation.Output != null)
-            {
-                var pos = e.GetPosition(IsolationOutput);
-                var brightness = ModelView.CharacterIsolation.GetPixel((int) pos.X, (int) pos.Y).GetBrightness();
-
-                CurrentBrightness = brightness;
-            }
+                    Int32Rect? zone = ModelView.CharacterIsolation.GetCurrentZone(pixelX, pixelY);
+                    DebugInformation = pixelX + "," + pixelY + " zone:" + zone;
+                    if (zone != null)
+                        CurrentZone = new CroppedBitmap(ModelView.Original, zone.Value);
+                }
             }
             catch (Exception)
             {
-                
             }
             base.OnMouseMove(e);
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            try
+            {
+                if (ModelView.CharacterIsolation != null && ModelView.CharacterIsolation.Output != null)
+                {
+                    Point pos = e.GetPosition(IsolationOutput);
+                    var bmpImage = (WriteableBitmap) IsolationOutput.Source;
+                    var pixelX = (int) (pos.X*bmpImage.PixelWidth/IsolationOutput.ActualWidth);
+                    var pixelY = (int) (pos.Y*bmpImage.PixelHeight/IsolationOutput.ActualHeight);
+
+                    Int32Rect? zone = ModelView.CharacterIsolation.GetCurrentZone(pixelX, pixelY);
+
+                    if (zone != null)
+                    {
+                        ModelView.RecognizeCommand.Execute(zone.Value);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+            base.OnMouseDown(e);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

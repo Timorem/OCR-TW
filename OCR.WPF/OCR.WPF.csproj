@@ -64,6 +64,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Algorithms\CharacterIsolation.cs" />
+    <Compile Include="Algorithms\CharacterMapEntry.cs" />
+    <Compile Include="Algorithms\CharacterRecognition.cs" />
+    <Compile Include="Algorithms\ComparaisonEntry.cs" />
     <Compile Include="Algorithms\Projection.cs" />
     <Compile Include="Algorithms\Word.cs" />
     <Compile Include="Imaging\ColorsExtension.cs" />

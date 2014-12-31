@@ -14,10 +14,10 @@ namespace OCR.WPF.Algorithms
         {
             EdgeDetector = edgeDetector;
             LinesBlankThreshold = 0.001d;
-            CharactersBlankThreshold = 0.08d;
-            WordPixelSpaces = 5;
+            WordsBlankThreshold = 0.0055d;
+            CharactersBlankThreshold = 0.566d;
+            WordPixelSpaces = 3;
             CharactersPixelSpaces = 1;
-            Characters = new ObservableCollection<Int32Rect>();
             Words = new ObservableCollection<Word>();
             Lines = new ObservableCollection<Int32Rect>();
         }
@@ -29,12 +29,6 @@ namespace OCR.WPF.Algorithms
         }
 
         public ObservableCollection<Int32Rect> Lines
-        {
-            get;
-            set;
-        }
-
-        public ObservableCollection<Int32Rect> Characters
         {
             get;
             set;
@@ -58,6 +52,11 @@ namespace OCR.WPF.Algorithms
         }
 
         public double LinesBlankThreshold
+        {
+            get;
+            set;
+        }
+        public double WordsBlankThreshold
         {
             get;
             set;
@@ -87,6 +86,27 @@ namespace OCR.WPF.Algorithms
             set;
         }
 
+        public Int32Rect? GetCurrentZone(int x, int y)
+        {
+            foreach (var word in Words)
+            {
+                if (word.Region.X <= x && word.Region.X + word.Region.Width >= x &&
+                    word.Region.Y <= y && word.Region.Y + word.Region.Height >= y)
+                {
+                    foreach (var character in word.Characters)
+                    {
+                        if (character.X <= x && character.X + character.Width >= x &&
+                            character.Y <= y && character.Y + character.Height >= y)
+                        {
+                            return character;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public override void Initialize()
         {
             EdgeDetector.Compute();
@@ -107,20 +127,22 @@ namespace OCR.WPF.Algorithms
                     Lines.Add(line);
             }
 
+            int i = 0;
             // isolate words
             foreach (Int32Rect line in Lines)
             {
-                foreach (Int32Rect region in Isolate(line, CharactersBlankThreshold, WordPixelSpaces, false, ShowWords ? (Color?)Colors.Blue : null))
+                foreach (Int32Rect region in Isolate(line, WordsBlankThreshold, WordPixelSpaces, false, ShowWords ? (Color?)Colors.Blue : null))
                 {
                     if (region.Height > 0 && region.Width > 0)
-                        Words.Add(new Word(region));
+                        Words.Add(new Word(region,i));
                 }
+                i++;
             }
 
             // isolate characters
             foreach (Word word in Words)
             {
-                foreach (Int32Rect region in Isolate(word.Region, CharactersBlankThreshold, CharactersPixelSpaces, false, ShowCharacters ? (Color?)Colors.Green : null, true))
+                foreach (Int32Rect region in Isolate(word.Region, CharactersBlankThreshold, CharactersPixelSpaces, false, ShowCharacters ? (Color?)Colors.Green : null, true, true, true))
                 {
                     if (region.Height > 0 && region.Width > 0)
                         word.Characters.Add(region);
@@ -128,7 +150,7 @@ namespace OCR.WPF.Algorithms
             }
         }       
 
-        private IEnumerable<Int32Rect> Isolate(Int32Rect zone, double spacesRatio, int blanksBetweenRegionsRatio, bool horizontal, Color? drawColor, bool drawBlanks = false)
+        private IEnumerable<Int32Rect> Isolate(Int32Rect zone, double spacesRatio, int blanksBetweenRegionsRatio, bool horizontal, Color? drawColor, bool drawBlanks = false, bool minStrat = false, bool crop = false)
         {
             int right = zone.X + zone.Width;
             int bot = zone.Y + zone.Height;
@@ -139,19 +161,30 @@ namespace OCR.WPF.Algorithms
             for (; x < (horizontal ? bot : right); x++)
             {
                 double sum = 0;
+                double min = 1.0;
                 int y = horizontal ? zone.X : zone.Y;
+                int? cropTop = null;
+                int? cropBot = null;
                 for (; y < (horizontal ? right : bot); y++)
                 {
-                    sum += horizontal ? GetPixel(y, x).GetBrightness() : GetPixel(x, y).GetBrightness();
+                    var brightness = horizontal ? GetPixel(y, x).GetBrightness() : GetPixel(x, y).GetBrightness();
+                    sum += brightness;
+                    if (brightness < min)
+                        min = brightness;
+
+                    if (crop && brightness < spacesRatio && cropTop == null)
+                        cropTop = y;
+                    if (crop && brightness >= spacesRatio && cropBot == null && cropTop != null)
+                        cropBot = y;
+                    if (crop && brightness < spacesRatio && cropTop != null && cropBot != null)
+                        cropBot = y;
                 }
 
                 double ratio = 1-(double) sum/(horizontal ? zone.Width : zone.Height);
-                bool blank = ratio <= spacesRatio;
+                bool blank = minStrat ? min > spacesRatio : ratio <= spacesRatio;
 
                 if (blank)
                 {
-                    if (!horizontal && drawBlanks)
-                        Output.DrawLine(x, zone.Y, x, bot, Colors.HotPink);
                     spaces++;
                 }
 
@@ -159,24 +192,43 @@ namespace OCR.WPF.Algorithms
                 {
                     spaces = 0;
                     inRegion = true;
-                    currentRegion = horizontal ? new Int32Rect(zone.X, x, zone.Width, 0) : new Int32Rect(x, zone.Y, 0, zone.Height);
+                    if (horizontal)
+                    {
+                        var regionX = crop && cropTop.HasValue ? cropTop.Value : zone.X;
+                        var regionWidth = crop && cropBot.HasValue ? cropBot.Value - regionX : zone.Width;
+                        currentRegion = new Int32Rect(regionX, x, regionWidth, 0);
+                    }
+                    else
+                    {
+                        var regionY = crop && cropTop.HasValue ? cropTop.Value : zone.Y;
+                        var regionHeight = crop && cropBot.HasValue ? cropBot.Value - regionY : zone.Height;
+                        currentRegion = new Int32Rect(x, regionY, 0, regionHeight);
+                    }
                 }
                 else if (inRegion && (blank || x == (horizontal ? bot : right) -1 ))
                 {
-                    bool newRegion = spaces >= blanksBetweenRegionsRatio;
+                    bool newRegion = spaces >= blanksBetweenRegionsRatio || x == (horizontal ? bot : right) -1; // last region
                     if (newRegion)
                     {
                         inRegion = false;
                         if (horizontal)
-                            currentRegion.Height = x - spaces - currentRegion.Y;
+                            currentRegion.Height = x - (spaces - 1) - currentRegion.Y;
                         else
-                            currentRegion.Width = x - spaces - currentRegion.X;
+                            currentRegion.Width = x - (spaces - 1) - currentRegion.X;
 
                         yield return currentRegion;
 
                         if (drawColor.HasValue)
                             Output.DrawRectangle(currentRegion.X, currentRegion.Y, currentRegion.X + currentRegion.Width, currentRegion.Y + currentRegion.Height, drawColor.Value);
                     }
+                }
+
+                if (inRegion && crop)
+                {
+                    if (cropTop.HasValue && currentRegion.Y > cropTop.Value)
+                        currentRegion.Y = cropTop.Value;
+                    if (cropBot.HasValue && currentRegion.Y + currentRegion.Height < cropBot.Value)
+                        currentRegion.Height = cropBot.Value - currentRegion.Y;
                 }
             }
             if (inRegion)

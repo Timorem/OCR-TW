@@ -49,13 +49,13 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Image Source="{Binding CharacterIsolation.Output}" Name="IsolationOutput"/>
-                        <TextBlock Text="{Binding CurrentBrightness, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
+                        <TextBlock Text="{Binding DebugInformation, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
                         <Image Grid.Row="1" Grid.Column="0" Source="{Binding VerticalProjection.Output}"
                            Width="{Binding ActualWidth, ElementName=IsolationOutput}" Stretch="Fill" />
                         <Image Grid.Row="0" Grid.Column="1" Source="{Binding HorizontalProjection.Output}"
                            Height="{Binding ActualHeight, ElementName=IsolationOutput}" Stretch="Fill" />
                     </Grid>
-                    <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Header="Actions">
+                    <GroupBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="1" Header="Actions">
                         <StackPanel>
                             <DockPanel>
                                 <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.WordPixelSpaces, StringFormat={}Spaces between words : {0:n}}"/>
@@ -66,8 +66,12 @@
                                 <Slider DockPanel.Dock="Right" Minimum="1" Maximum="20" Value="{Binding CharacterIsolation.CharactersPixelSpaces}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
                             <DockPanel>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.WordsBlankThreshold, StringFormat={}Words blank threshold : {0:0.0000}%}"/>
+                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.WordsBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                            </DockPanel>
+                            <DockPanel>
                                 <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.CharactersBlankThreshold, StringFormat={}Characters blank threshold : {0:0.0000}%}"/>
-                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.CharactersBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="1" Value="{Binding CharacterIsolation.CharactersBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
                             <StackPanel Orientation="Horizontal">
                                 <CheckBox IsChecked="{Binding CharacterIsolation.ShowLines}" Margin="3" Content="Show Lines" Checked="ToggleButton_OnChecked"/>
@@ -81,18 +85,26 @@
                         <ListBox ItemsSource="{Binding CharacterIsolation.Words}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Image Stretch="None">
-                                        <Image.Source>
-                                            <CroppedBitmap
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image Stretch="None">
+                                            <Image.Source>
+                                                <CroppedBitmap
                                                 Source="{Binding Data.Original, Source={StaticResource Proxy}}"
                                                 SourceRect="{Binding Region}" />
-                                        </Image.Source>
-                                    </Image>
+                                            </Image.Source>
+                                        </Image>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </GroupBox>
-
+                    <GroupBox Grid.Row="1" Grid.Column="1" Header="Recognition">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Image Stretch="None" Source="{Binding CurrentZone, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Window}}}"/>
+                            <TextBlock Text="->"></TextBlock>
+                            <TextBlock Text="{Binding CharacterRecognition.RecognizedCharacter}"></TextBlock>
+                        </StackPanel>
+                    </GroupBox>
                 </Grid>
             </TabItem>
             <TabItem Header="Edge Detection">
@@ -108,6 +120,65 @@
                         </StackPanel>
                     </GroupBox>
                 </StackPanel>
+            </TabItem>
+            <TabItem Header="Font selection">
+                <StackPanel>
+                    <ComboBox Margin="5" ItemsSource="{x:Static Fonts.SystemFontFamilies}" SelectedItem="{Binding SelectedFont}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontFamily="{Binding}"></TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <ComboBox Margin="5" ItemsSource="{Binding Typesfaces}" SelectedItem="{Binding CharacterRecognition.Typeface}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Data.SelectedFont, Source={StaticResource Proxy}}" FontFamily="{Binding Data.SelectedFont, Source={StaticResource Proxy}}"
+                                           FontStretch="{Binding Stretch}"
+                                           FontStyle="{Binding Style}"
+                                           FontWeight="{Binding Weight}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Character Recognition">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+
+                    <GroupBox Header="Output">
+                        <StackPanel>
+                            <TextBox Margin="3" MinLines="10" Text="{Binding RecognizedText}"/>
+                            <Button Margin="3" Content="Compute all text" Command="{Binding RecognizeTextCommand}"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Debug" Grid.Row="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding CharacterRecognition.Entries}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Image Margin="2" Source="{Binding CharacterBitmap}" Height="64" Width="64" Stretch="Uniform" VerticalAlignment="Center"/>
+                                            <Image Margin="2" Height="64" Width="64" Stretch="Uniform">
+                                                <Image.Source>
+                                                    <CroppedBitmap
+                                                Source="{Binding Data.Original, Source={StaticResource Proxy}}"
+                                                SourceRect="{Binding Data.CharacterRecognition.CharacterZone, Source={StaticResource Proxy}}" />
+                                                </Image.Source>
+                                            </Image>
+                                            <Image Margin="2" Source="{Binding DifferenceBitmap}" Height="64" Width="64" Stretch="Uniform" VerticalAlignment="Center"/>
+                                            <TextBlock Margin="2" Text="{Binding TrustLevel, StringFormat={}{0:0.00}}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </GroupBox>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>
