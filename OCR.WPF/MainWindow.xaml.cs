@@ -54,7 +54,12 @@ namespace OCR.WPF
                 return;
             }
 
-            ModelView.OpenPicture(files.Single());
+            var file = files.Single();
+
+            if (System.IO.Path.GetExtension(file) == ".txt")
+                ModelView.LoadDictionary(file);
+            else
+                ModelView.OpenPicture(files.Single());
         }
 
         private void RangeBase_OnValueChanged(object sender, DragCompletedEventArgs dragCompletedEventArgs)

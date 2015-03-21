@@ -10,7 +10,14 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 using OCR.WPF.Algorithms;
+using OCR.WPF.Algorithms.PostProcessing;
+using OCR.WPF.Algorithms.PostProcessing.Distance;
+using OCR.WPF.Algorithms.PostProcessing.Resolver;
+using OCR.WPF.Algorithms.PostProcessing.Tree;
+using OCR.WPF.Algorithms.PreProcessing;
+using OCR.WPF.Algorithms.Processing;
 using OCR.WPF.Properties;
 using OCR.WPF.UI;
 
@@ -54,6 +61,12 @@ namespace OCR.WPF
             private set;
         }
 
+        public Correction Correction
+        {
+            get;
+            private set;
+        }
+
         public void OpenPicture(string file)
         {
             if (!File.Exists(file))
@@ -74,6 +87,9 @@ namespace OCR.WPF
             EdgeDetector.GradientLimit = 20;
             CharacterIsolation = new CharacterIsolation(Original, EdgeDetector);
             CharacterRecognition = new CharacterRecognition(Original);
+
+            Correction = new Correction(Original, new WordTree(new HammingDistance(false), 
+                new HammingDistance('?', false), new FrequencyResolver()));
         }
 
 
@@ -102,7 +118,6 @@ namespace OCR.WPF
         }
 
         #endregion
-
 
         #region ApplyCharacterIsolationCommand
 
@@ -148,7 +163,6 @@ namespace OCR.WPF
 
         #endregion
 
-
         #region RecognizeCommand
 
         private DelegateCommand m_recognizeCommand;
@@ -175,16 +189,10 @@ namespace OCR.WPF
 
         #endregion
 
-
         #region RecognizeTextCommand
 
         private DelegateCommand m_recognizeTextCommand;
 
-        public string RecognizedText
-        {
-            get;
-            set;
-        }
 
         public DelegateCommand RecognizeTextCommand
         {
@@ -209,6 +217,7 @@ namespace OCR.WPF
                 {
                     i = word.LineIndex;
                     textBuilder.Append("\n");
+                    Correction.Text = textBuilder.ToString();
                 }
 
                 foreach (var character in word.Characters)
@@ -221,7 +230,98 @@ namespace OCR.WPF
                 textBuilder.Append(" ");
             }
 
-            RecognizedText = textBuilder.ToString();
+            Correction.Text = textBuilder.ToString();
+            CorrectTextCommand.RaiseCanExecuteChanged();
+        }
+
+        #endregion
+
+        #region LoadDictionaryCommand
+
+        private DelegateCommand m_loadDictionaryCommand;
+
+
+        public DelegateCommand LoadDictionaryCommand
+        {
+            get { return m_loadDictionaryCommand ?? (m_loadDictionaryCommand = new DelegateCommand(OnLoadDictionary, CanLoadDictionary)); }
+        }
+
+        private bool CanLoadDictionary(object parameter)
+        {
+            return true;
+        }
+
+        private void OnLoadDictionary(object parameter)
+        {
+            if (!CanLoadDictionary(parameter))
+                return;
+
+            var dialog = new OpenFileDialog();
+            dialog.Title = "Select dictionary ...";
+            dialog.Filter = "Dictionary (*.txt)|*.txt";
+
+            if (dialog.ShowDialog() == true)
+            {
+                LoadDictionary(dialog.FileName);
+            }
+
+
+
+            CorrectTextCommand.RaiseCanExecuteChanged();
+        }
+
+        public void LoadDictionary(string file)
+        {
+            using (var reader = new StringReader(File.ReadAllText(file)))
+            {
+                string newLine;
+                while ((newLine = reader.ReadLine()) != null)
+                {
+                    var split = newLine.Split(' ');
+                    string word;
+                    double frequency;
+                    if (split.Length < 2)
+                    {
+                        word = split[0];
+                        frequency = 1;
+                    }
+                    else
+                    {
+                        word = split[0];
+                        if (!double.TryParse(split[1], NumberStyles.AllowDecimalPoint,
+                            CultureInfo.InvariantCulture, out frequency))
+                            frequency = 0;
+                    }
+
+                    Correction.Tree.Populate(new DictionaryWord(word, frequency));
+                }
+            }
+
+        }
+
+        #endregion
+
+        #region CorrectTextCommand
+
+        private DelegateCommand m_correctTextCommand;
+
+
+        public DelegateCommand CorrectTextCommand
+        {
+            get { return m_correctTextCommand ?? (m_correctTextCommand = new DelegateCommand(OnCorrectText, CanCorrectText)); }
+        }
+
+        private bool CanCorrectText(object parameter)
+        {
+            return Correction != null && Correction.Tree.Root != null && !string.IsNullOrEmpty(Correction.Text);
+        }
+
+        private void OnCorrectText(object parameter)
+        {
+            if (!CanCorrectText(parameter))
+                return;
+
+            Correction.Compute();
         }
 
         #endregion

@@ -9,6 +9,7 @@
     <Window.Resources>
         <ui:BindingProxy x:Key="Proxy" Data="{Binding}"/>
         <converters:MultiplyConverter x:Key="MultiplyConverter"/>
+        <converters:CorrectWordsConverter x:Key="CorrectWordsConverter"/>
     </Window.Resources>
     <Grid>
         <TabControl Grid.Row="0" Grid.Column="0">
@@ -64,6 +65,10 @@
                             <DockPanel>
                                 <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.CharactersPixelSpaces, StringFormat={}Spaces between characters : {0:n}}"/>
                                 <Slider DockPanel.Dock="Right" Minimum="1" Maximum="20" Value="{Binding CharacterIsolation.CharactersPixelSpaces}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                            </DockPanel>
+                            <DockPanel>
+                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.LinesBlankThreshold, StringFormat={}Lines blank threshold : {0:0.0000}%}"/>
+                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.LinesBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
                             <DockPanel>
                                 <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.WordsBlankThreshold, StringFormat={}Words blank threshold : {0:0.0000}%}"/>
@@ -151,7 +156,7 @@
 
                     <GroupBox Header="Output">
                         <StackPanel>
-                            <TextBox Margin="3" MinLines="10" Text="{Binding RecognizedText}"/>
+                            <TextBox Margin="3" MinLines="10" Text="{Binding Correction.Text}"/>
                             <Button Margin="3" Content="Compute all text" Command="{Binding RecognizeTextCommand}"/>
                         </StackPanel>
                     </GroupBox>
@@ -159,6 +164,11 @@
                     <GroupBox Header="Debug" Grid.Row="1">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <ItemsControl ItemsSource="{Binding CharacterRecognition.Entries}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -178,6 +188,26 @@
                             </ItemsControl>
                         </ScrollViewer>
                     </GroupBox>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Correction">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <GroupBox Grid.Row="0" Header="Original">
+                        <TextBox Text="{Binding Correction.Text}" FontSize="24"/>
+                    </GroupBox>
+                    <GroupBox Grid.Row="1" Header="Result">
+                        <ui:BindableRichTextBox FontSize="24" BindableDocument="{Binding Correction.CorrectedWords, Converter={StaticResource CorrectWordsConverter}, Mode=OneWay}"/>
+                    </GroupBox>
+                    <Button Grid.Row ="2" Content="Recognize all text" Command="{Binding RecognizeTextCommand}"/>
+                    <Button Grid.Row ="3" Content="Load dictionary" Command="{Binding LoadDictionaryCommand}"/>
+                    <Button Grid.Row ="4" Content="Apply correction" Command="{Binding CorrectTextCommand}"/>
                 </Grid>
             </TabItem>
         </TabControl>

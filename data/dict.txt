@@ -1,0 +1,10 @@
+the 0.2
+quick 0.3
+brown 0.6
+fox 0.4
+jumps 0.5
+over 0.3
+the 0.3
+thu 0.1
+lazy 0.1
+dog 0.1
