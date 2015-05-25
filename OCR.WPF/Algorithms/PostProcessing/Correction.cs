@@ -42,19 +42,21 @@ namespace OCR.WPF.Algorithms.PostProcessing
 
         protected override unsafe void OnCompute()
         {
-
+            // initialisation
             m_correctedWords.Clear();
-            // todo : re-compose words ?
 
+            // décompose le texte en lignes
             var lines = Text.Split(new []{"\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries);
             int index = 0;
             foreach (var line in lines)
             {
+                // décompose le texte en mots
                 IEnumerable<string> words =
                     line.Split(new[] {" ", "\r\n", "\n"}, StringSplitOptions.RemoveEmptyEntries)
                         .Select(x => x);
                 foreach (string word in words)
                 {
+                    // pour chaque mot (sans prendre compte des majuscules/minuscules) on cherche le mot du dictionnaire le plus proche
                     var correctedWord = new CorrectedWord(word.ToLowerInvariant(), index);
                     string output;
                     int distance;

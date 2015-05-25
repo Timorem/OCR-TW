@@ -5,6 +5,9 @@ using System.Windows;
 
 namespace OCR.WPF.Algorithms.Processing
 {
+    /// <summary>
+    /// Représente un mot détecté
+    /// </summary>
     public class DetectedWord : INotifyPropertyChanged
     {
         public DetectedWord(Int32Rect region, int lineIndex)

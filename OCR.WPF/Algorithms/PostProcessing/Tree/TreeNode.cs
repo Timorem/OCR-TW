@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace OCR.WPF.Algorithms.PostProcessing.Tree
 {
+    // représente un noeud de l'arbre
     public class TreeNode
     {
         private readonly Dictionary<int, TreeNode> m_children = new Dictionary<int, TreeNode>();
@@ -19,6 +20,7 @@ namespace OCR.WPF.Algorithms.PostProcessing.Tree
             private set;
         }
 
+        // etiquette
         public DictionaryWord Label
         {
             get;

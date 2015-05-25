@@ -66,22 +66,20 @@
                                 <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.CharactersPixelSpaces, StringFormat={}Spaces between characters : {0:n}}"/>
                                 <Slider DockPanel.Dock="Right" Minimum="1" Maximum="20" Value="{Binding CharacterIsolation.CharactersPixelSpaces}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
                             </DockPanel>
-                            <DockPanel>
-                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.LinesBlankThreshold, StringFormat={}Lines blank threshold : {0:0.0000}%}"/>
-                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.LinesBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
-                            </DockPanel>
-                            <DockPanel>
-                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.WordsBlankThreshold, StringFormat={}Words blank threshold : {0:0.0000}%}"/>
-                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.WordsBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
-                            </DockPanel>
-                            <DockPanel>
-                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding CharacterIsolation.CharactersBlankThreshold, StringFormat={}Characters blank threshold : {0:0.0000}%}"/>
-                                <Slider DockPanel.Dock="Right" Minimum="0.0001" Maximum="1" Value="{Binding CharacterIsolation.CharactersBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
-                            </DockPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="100"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Margin="3" Width="250" Text="{Binding CharacterIsolation.PixelBlankThreshold, StringFormat={}Lines blank threshold : {0:0.0000}%}"/>
+                                <Slider Grid.Column="1" Minimum="0.0001" Maximum="0.1" Value="{Binding CharacterIsolation.PixelBlankThreshold}" Thumb.DragCompleted="RangeBase_OnValueChanged"/>
+                                <TextBox Grid.Column="2" Text="{Binding CharacterIsolation.PixelBlankThreshold}"/>
+                            </Grid>
                             <StackPanel Orientation="Horizontal">
-                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowLines}" Margin="3" Content="Show Lines" Checked="ToggleButton_OnChecked"/>
-                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowCharacters}" Margin="3" Content="Show Characters" Checked="ToggleButton_OnChecked"/>
-                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowWords}" Margin="3" Content="Show Words" Checked="ToggleButton_OnChecked"/>
+                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowLines}" Margin="3" Content="Show Lines" Checked="ToggleButton_OnChecked" Unchecked="ToggleButton_OnChecked"/>
+                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowCharacters}" Margin="3" Content="Show Characters" Checked="ToggleButton_OnChecked" Unchecked="ToggleButton_OnChecked"/>
+                                <CheckBox IsChecked="{Binding CharacterIsolation.ShowWords}" Margin="3" Content="Show Words" Checked="ToggleButton_OnChecked" Unchecked="ToggleButton_OnChecked"/>
                             </StackPanel>
                             <Button Margin="3" Content="Compute" Command="{Binding ApplyCharacterIsolationCommand}" />
                         </StackPanel>
@@ -111,20 +109,6 @@
                         </StackPanel>
                     </GroupBox>
                 </Grid>
-            </TabItem>
-            <TabItem Header="Edge Detection">
-                <StackPanel>
-                    <Image Source="{Binding EdgeDetector.Output}" />
-                    <GroupBox Header="Actions">
-                        <StackPanel>
-                            <DockPanel>
-                                <TextBlock Margin="3"  DockPanel.Dock="Left" Width="250" Text="{Binding EdgeDetector.GradientLimit}"/>
-                                <Slider DockPanel.Dock="Right" Minimum="0" Maximum="255" Value="{Binding EdgeDetector.GradientLimit}" Thumb.DragCompleted="GradientRangeBase_OnValueChanged"/>
-                            </DockPanel>
-                            <Button Margin="3" Content="Compute" Command="{Binding ApplyEdgeDetectionCommand}" />
-                        </StackPanel>
-                    </GroupBox>
-                </StackPanel>
             </TabItem>
             <TabItem Header="Font selection">
                 <StackPanel>
@@ -198,6 +182,7 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <GroupBox Grid.Row="0" Header="Original">
                         <TextBox Text="{Binding Correction.Text}" FontSize="24"/>
@@ -208,6 +193,10 @@
                     <Button Grid.Row ="2" Content="Recognize all text" Command="{Binding RecognizeTextCommand}"/>
                     <Button Grid.Row ="3" Content="Load dictionary" Command="{Binding LoadDictionaryCommand}"/>
                     <Button Grid.Row ="4" Content="Apply correction" Command="{Binding CorrectTextCommand}"/>
+                    <StackPanel Grid.Row ="5" Orientation="Horizontal">
+                        <RadioButton Content="Hamming distance" IsChecked="{Binding UseHammingDistance}"/>
+                        <RadioButton Content="Levensthein distance" IsChecked="{Binding UseLevenstheinDistance}"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>

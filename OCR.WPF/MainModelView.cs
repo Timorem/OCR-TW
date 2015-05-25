@@ -49,11 +49,6 @@ namespace OCR.WPF
             get;
             private set;
         }
-        public EdgeDetector EdgeDetector
-        {
-            get;
-            private set;
-        }
 
         public CharacterRecognition CharacterRecognition
         {
@@ -83,41 +78,13 @@ namespace OCR.WPF
             HorizontalProjection = new Projection(Original) {Type = ProjectionType.Horizontal};
             HorizontalProjection.Compute();
 
-            EdgeDetector = new EdgeDetector(Original);
-            EdgeDetector.GradientLimit = 20;
-            CharacterIsolation = new CharacterIsolation(Original, EdgeDetector);
+            CharacterIsolation = new CharacterIsolation(Original);
             CharacterRecognition = new CharacterRecognition(Original);
 
             Correction = new Correction(Original, new WordTree(new HammingDistance(false), 
                 new HammingDistance('?', false), new FrequencyResolver()));
         }
 
-
-        #region ApplyEdgeDetectionCommand
-
-        private DelegateCommand m_applyEdgeDetectionCommand;
-        private BitmapSource m_image;
-
-        public DelegateCommand ApplyEdgeDetectionCommand
-        {
-            get { return m_applyEdgeDetectionCommand ?? (m_applyEdgeDetectionCommand = new DelegateCommand(OnApplyEdgeDetection, CanApplyEdgeDetection)); }
-        }
-
-        private bool CanApplyEdgeDetection(object parameter)
-        {
-            return true;
-        }
-
-        private void OnApplyEdgeDetection(object parameter)
-        {
-            if (!CanApplyEdgeDetection(parameter))
-                return;
-
-            EdgeDetector.Compute();
-            
-        }
-
-        #endregion
 
         #region ApplyCharacterIsolationCommand
 
@@ -238,6 +205,12 @@ namespace OCR.WPF
 
         #region LoadDictionaryCommand
 
+        public string DictionaryFilePath
+        {
+            get;
+            set;
+        }
+
         private DelegateCommand m_loadDictionaryCommand;
 
 
@@ -265,13 +238,13 @@ namespace OCR.WPF
                 LoadDictionary(dialog.FileName);
             }
 
-
-
             CorrectTextCommand.RaiseCanExecuteChanged();
         }
 
         public void LoadDictionary(string file)
         {
+            DictionaryFilePath = file;
+
             using (var reader = new StringReader(File.ReadAllText(file)))
             {
                 string newLine;
@@ -303,7 +276,40 @@ namespace OCR.WPF
 
         #region CorrectTextCommand
 
+        public bool UseHammingDistance
+        {
+            get { return m_useHammingDistance; }
+            set { m_useHammingDistance = value;
+                OnDistanceChanged();
+            }
+        }
+
+        public bool UseLevenstheinDistance
+        {
+            get { return m_useLevenstheinDistance; }
+            set { m_useLevenstheinDistance = value;
+                OnDistanceChanged();
+            }
+        }
+
+        private void OnDistanceChanged()
+        {
+            if (UseHammingDistance)
+                Correction = new Correction(Original, new WordTree(new HammingDistance(false), 
+                    new HammingDistance('?', false), new FrequencyResolver()));
+            if (UseLevenstheinDistance)
+                Correction = new Correction(Original, new WordTree(new LevenshteinDistance(), 
+                    new LevenshteinDistance(), new FrequencyResolver()));
+
+            if (!string.IsNullOrEmpty(DictionaryFilePath))
+                LoadDictionary(DictionaryFilePath);
+
+            CorrectTextCommand.RaiseCanExecuteChanged();
+        }
+
         private DelegateCommand m_correctTextCommand;
+        private bool m_useLevenstheinDistance;
+        private bool m_useHammingDistance;
 
 
         public DelegateCommand CorrectTextCommand

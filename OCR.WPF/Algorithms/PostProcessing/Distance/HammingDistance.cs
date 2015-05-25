@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace OCR.WPF.Algorithms.PostProcessing.Distance
 {
+    // hamming distance
+    // = nombre de caractères différents
     public class HammingDistance : IComparer<string>
     {
         // match all characters

@@ -47,8 +47,10 @@ namespace OCR.WPF.Algorithms
 
         public virtual void Initialize()
         {
+            // initialise les mémoires tampons en fonction de la taille et format de l'image
+
             if (Source.Format.BitsPerPixel != 32)
-                throw new Exception(string.Format("Pixel format {0} not handled !", Input.Format));
+                throw new Exception(string.Format("Format de pixel invalide : {0}", Input.Format));
 
             m_pixelSize = Source.Format.BitsPerPixel/8;
             m_stride = Source.PixelWidth*m_pixelSize;
@@ -62,6 +64,7 @@ namespace OCR.WPF.Algorithms
             m_initialized = true;
         }
 
+        // execute l'algorithme et modifie Output
         public void Compute()
         {
             if (!m_initialized)

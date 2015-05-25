@@ -11,6 +11,7 @@ using OCR.WPF.Algorithms.PostProcessing;
 
 namespace OCR.WPF.UI.Converters
 {
+    // affiche les mots corrigés en couleurs
     public class CorrectWordsConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -32,12 +33,14 @@ namespace OCR.WPF.UI.Converters
                 }
 
                 var text = new TextBlock(new Run(!string.IsNullOrEmpty(word.Corrected) ? word.Corrected : word.Original));
-                //text.FontSize = 24;
                 var decoration = new TextDecoration {Location = TextDecorationLocation.Underline};
+                // vert si le mot existe dans le dictionnaire
                 if (word.IsCorrect)
                     decoration.Pen = new Pen(Brushes.Green, 2);
+                // orange si on a trouvé une correspondance (proche)
                 else if (!string.IsNullOrEmpty(word.Corrected) && word.DistanceFromOriginal > 0)
                     decoration.Pen = new Pen(Brushes.Orange, 2);
+                // rouge si aucune correspondance n'a été trouvée
                 else
                     decoration.Pen = new Pen(Brushes.Red, 2);
                 text.TextDecorations = new TextDecorationCollection();

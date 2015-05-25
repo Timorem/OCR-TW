@@ -67,11 +67,6 @@ namespace OCR.WPF
             if (ModelView != null && ModelView.ApplyCharacterIsolationCommand != null)
                 ModelView.ApplyCharacterIsolationCommand.Execute(null);
         }
-        private void GradientRangeBase_OnValueChanged(object sender, DragCompletedEventArgs dragCompletedEventArgs)
-        {
-            if (ModelView != null && ModelView.ApplyEdgeDetectionCommand != null)
-                ModelView.ApplyEdgeDetectionCommand.Execute(null);
-        }
 
         private void ToggleButton_OnChecked(object sender, RoutedEventArgs e)
         {
